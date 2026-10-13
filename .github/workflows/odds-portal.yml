@@ -22,17 +22,34 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
+      # Solange die Secrets fehlen, wird still übersprungen (keine Fehler-Mails alle 30 Minuten)
+      - name: Einrichtung prüfen
+        id: check
+        env:
+          K: ${{ secrets.ODDSPAPI_KEY }}
+          P: ${{ secrets.PORTAL_PASSWORD }}
+        run: |
+          if [ -n "$K" ] && [ -n "$P" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Secrets ODDSPAPI_KEY und PORTAL_PASSWORD fehlen noch – Lauf übersprungen (siehe README)."
+          fi
+
       - uses: actions/checkout@v4
+        if: steps.check.outputs.ready == 'true'
 
       - uses: actions/setup-python@v5
+        if: steps.check.outputs.ready == 'true'
         with:
           python-version: "3.12"
 
       - name: Abhängigkeiten
+        if: steps.check.outputs.ready == 'true'
         run: pip install cryptography==43.0.3
 
       # Zustand zwischen den Läufen (Tipp-Zuordnungen, Quoten, Budget-Zähler). Wird nie ins Repo geschrieben.
       - name: Zustand laden
+        if: steps.check.outputs.ready == 'true'
         uses: actions/cache/restore@v4
         with:
           path: portal/state
@@ -40,6 +57,7 @@ jobs:
           restore-keys: portal-state-
 
       - name: Quoten abrufen und Portal bauen
+        if: steps.check.outputs.ready == 'true'
         env:
           ODDSPAPI_KEY: ${{ secrets.ODDSPAPI_KEY }}
           PORTAL_PASSWORD: ${{ secrets.PORTAL_PASSWORD }}
@@ -51,17 +69,20 @@ jobs:
         run: python portal/fetch.py
 
       - name: Zustand speichern
-        if: always()
+        if: always() && steps.check.outputs.ready == 'true'
         uses: actions/cache/save@v4
         with:
           path: portal/state
           key: portal-state-${{ github.run_id }}
 
       - uses: actions/configure-pages@v5
+        if: steps.check.outputs.ready == 'true'
 
       - uses: actions/upload-pages-artifact@v3
+        if: steps.check.outputs.ready == 'true'
         with:
           path: site
 
       - id: deploy
+        if: steps.check.outputs.ready == 'true'
         uses: actions/deploy-pages@v4
