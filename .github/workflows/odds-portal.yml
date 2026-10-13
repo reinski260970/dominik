@@ -1,0 +1,67 @@
+name: Quotenvergleich-Portal
+
+on:
+  schedule:
+    - cron: "7,37 * * * *"        # alle 30 Minuten (GitHub startet geplante Läufe oft ein paar Minuten später)
+  workflow_dispatch: {}           # manuell starten: Actions -> Quotenvergleich-Portal -> Run workflow
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: odds-portal
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Abhängigkeiten
+        run: pip install cryptography==43.0.3
+
+      # Zustand zwischen den Läufen (Tipp-Zuordnungen, Quoten, Budget-Zähler). Wird nie ins Repo geschrieben.
+      - name: Zustand laden
+        uses: actions/cache/restore@v4
+        with:
+          path: portal/state
+          key: portal-state-${{ github.run_id }}
+          restore-keys: portal-state-
+
+      - name: Quoten abrufen und Portal bauen
+        env:
+          ODDSPAPI_KEY: ${{ secrets.ODDSPAPI_KEY }}
+          PORTAL_PASSWORD: ${{ secrets.PORTAL_PASSWORD }}
+          SHEET_WEBAPP_URL: ${{ secrets.SHEET_WEBAPP_URL }}
+          SHEET_TOKEN: ${{ secrets.SHEET_TOKEN }}
+          TIPS_CSV_URL: ${{ secrets.TIPS_CSV_URL }}
+          STATE_DIR: portal/state
+          OUT_DIR: site/data
+        run: python portal/fetch.py
+
+      - name: Zustand speichern
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: portal/state
+          key: portal-state-${{ github.run_id }}
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4

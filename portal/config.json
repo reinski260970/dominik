@@ -1,0 +1,52 @@
+{
+  "sports": [
+    "soccer",
+    "basketball",
+    "tennis"
+  ],
+  "bookmakers": [
+    "Bet365",
+    "Admiral",
+    "Interwetten",
+    "Bwin",
+    "Merkur Bets",
+    "Lottoland",
+    "Tipico",
+    "Mr Green",
+    "William Hill",
+    "Bet3000"
+  ],
+  "tips": {
+    "first_row": 2,
+    "columns": {
+      "kickoff": "B",
+      "league": "C",
+      "game": "D",
+      "tip": "E",
+      "stake": "F",
+      "min_odds": "G"
+    },
+    "ignore_older_than_days": 2,
+    "near_hours": 24,
+    "far_refresh_hours": 6
+  },
+  "scan": {
+    "hours_ahead": 24,
+    "every_hours": 24,
+    "not_before_hour_vienna": 7,
+    "share_of_daily_budget": 0.4
+  },
+  "budget": {
+    "monthly_reserve": 150,
+    "daily_max": 200,
+    "runs_per_day": 48
+  },
+  "leagues_per_call": 10,
+  "include_player_props": false,
+  "value_min_ev_pct": 2.0,
+  "value_min_books": 4,
+  "history_max_fixtures_per_run": 20,
+  "exclude_bookmakers": [
+    "pinnacle"
+  ]
+}

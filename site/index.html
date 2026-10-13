@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Quotenvergleich</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f3f5f8; --surface: #ffffff; --ink: #18222c; --muted: #5d6b78; --line: #d9dee5;
+  --mark: #f6cf3c; --mark-ink: #18222c; --good: #1d7a4c; --bad: #b2402d; --soft: #eaeef3;
+  --focus: #2f6fdd;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11181f; --surface: #18222b; --ink: #e6ebf0; --muted: #94a3b0; --line: #2b3742;
+    --mark: #f2c230; --mark-ink: #141a20; --good: #4cc48a; --bad: #f08a75; --soft: #202c37; --focus: #7aa8ff;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11181f; --surface: #18222b; --ink: #e6ebf0; --muted: #94a3b0; --line: #2b3742;
+  --mark: #f2c230; --mark-ink: #141a20; --good: #4cc48a; --bad: #f08a75; --soft: #202c37; --focus: #7aa8ff;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 "Barlow", system-ui, sans-serif; }
+.num, td.p, .odds { font-family: "Barlow Condensed", "Barlow", sans-serif; font-variant-numeric: tabular-nums; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* Anmeldung */
+#lock { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
+#lock form { width: min(380px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 28px; }
+#lock h1 { font: 700 34px/1.05 "Barlow Condensed", sans-serif; margin: 0 0 6px; }
+#lock p { color: var(--muted); margin: 0 0 20px; }
+#lock input[type=password] { width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+#lock label.keep { display: flex; gap: 8px; align-items: center; margin: 12px 0 18px; color: var(--muted); }
+.btn { border: 0; border-radius: 8px; padding: 10px 16px; background: var(--ink); color: var(--bg); font-weight: 600; cursor: pointer; }
+#lock .btn { width: 100%; }
+#lock .err { color: var(--bad); min-height: 1.4em; margin: 10px 0 0; }
+
+/* Kopf */
+header { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+.bar { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 22px; padding: 14px 20px 0; }
+.bar h1 { font: 700 26px/1 "Barlow Condensed", sans-serif; margin: 0; }
+.bar .stamp { color: var(--muted); font-size: 13px; }
+.bar .spacer { flex: 1; }
+.linkbtn { background: none; border: 0; color: var(--muted); cursor: pointer; padding: 0; text-decoration: underline; font-size: 13px; }
+nav { display: flex; gap: 4px; padding: 10px 14px 0; overflow-x: auto; }
+nav button { background: none; border: 0; border-bottom: 3px solid transparent; padding: 8px 10px 9px; cursor: pointer; color: var(--muted); font-weight: 600; white-space: nowrap; }
+nav button[aria-selected="true"] { color: var(--ink); border-color: var(--mark); }
+nav .count { font-family: "Barlow Condensed", sans-serif; color: var(--muted); font-weight: 500; margin-left: 4px; }
+
+main { padding: 18px 20px 60px; }
+.tools { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin-bottom: 12px; }
+.tools input[type=search], .tools select, .tools input[type=number] { padding: 7px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); }
+.tools label { display: flex; gap: 6px; align-items: center; color: var(--muted); }
+.summary { color: var(--muted); margin: 0 0 12px; }
+.summary b { color: var(--ink); font-family: "Barlow Condensed", sans-serif; font-size: 18px; }
+
+/* Tabellen */
+.wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 760px; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 13px; font-weight: 600; color: var(--muted); background: var(--surface); position: sticky; top: 0; white-space: nowrap; }
+th.p, td.p { text-align: right; width: 1%; white-space: nowrap; }
+td.p { font-size: 18px; font-weight: 600; }
+td.p.off { color: var(--muted); font-weight: 500; font-size: 15px; }
+td.p .best, .chip.best { background: var(--mark); color: var(--mark-ink); padding: 1px 6px; border-radius: 4px; }
+td.p .below { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 1px; }
+tbody tr.row { cursor: pointer; }
+tbody tr.row:hover td { background: var(--soft); }
+.game { font-weight: 600; }
+.sub { color: var(--muted); font-size: 13px; }
+.tipcell { font-family: "Barlow Condensed", sans-serif; font-size: 17px; font-weight: 600; white-space: nowrap; }
+.yes { color: var(--good); font-weight: 600; white-space: nowrap; }
+.no { color: var(--bad); font-weight: 600; white-space: nowrap; }
+.ev-pos { color: var(--good); }
+.ev-neg { color: var(--muted); }
+th.sticky, td.sticky { position: sticky; left: 0; z-index: 1; background: var(--surface); min-width: 210px; max-width: 280px; box-shadow: 1px 0 0 var(--line); }
+th.sticky { z-index: 2; }
+tbody tr.row:hover td.sticky { background: var(--soft); }
+td.sticky .when { color: var(--muted); font-size: 13px; white-space: nowrap; }
+.dh { font: 600 17px/1.2 "Barlow Condensed", "Barlow", sans-serif; margin: 0 0 6px; }
+@media (max-width: 760px) { th.sticky, td.sticky { min-width: 150px; max-width: 170px; } td.p { font-size: 16px; } }
+.warn { color: var(--bad); }
+.time { white-space: nowrap; }
+.chip .src { color: var(--muted); font-family: "Barlow", sans-serif; font-size: 12px; }
+tr.detail td { background: var(--soft); padding: 16px; }
+.detail-grid { position: sticky; left: 16px; max-width: min(1100px, calc(100vw - 72px)); display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 20px; }
+@media (max-width: 760px) { .detail-grid { grid-template-columns: 1fr; } main { padding: 14px 12px 50px; } .bar { padding: 12px 14px 0; } }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); border-radius: 5px; padding: 2px 7px; background: var(--surface); font-family: "Barlow Condensed", sans-serif; font-size: 15px; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; color: var(--muted); margin-top: 6px; }
+.legend i { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin-right: 5px; border-radius: 2px; }
+svg.chart { width: 100%; height: auto; display: block; }
+svg.chart text { fill: var(--muted); font: 12px "Barlow", sans-serif; }
+.empty { padding: 40px 20px; text-align: center; color: var(--muted); }
+.market { margin: 0 0 14px; }
+.market h3 { font: 600 17px/1.2 "Barlow Condensed", sans-serif; margin: 0 0 6px; }
+.market table { min-width: 0; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-top: 14px; }
+.panel h2 { font: 700 22px/1.1 "Barlow Condensed", sans-serif; margin: 0 0 4px; }
+.status dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0; }
+.status dt { color: var(--muted); }
+.status pre { white-space: pre-wrap; font: 13px/1.5 "Barlow", sans-serif; color: var(--muted); max-height: 420px; overflow: auto; }
+@media (prefers-reduced-motion: no-preference) { tr.detail td { animation: open .18s ease-out; } @keyframes open { from { opacity: 0; } } }
+.detail-inner { position: sticky; left: 16px; max-width: calc(100vw - 72px); }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<section id="lock">
+  <form id="loginForm" autocomplete="on">
+    <h1>Quotenvergleich</h1>
+    <p>Interner Bereich. Passwort eingeben, um die Quoten zu entschlüsseln.</p>
+    <label for="pw" class="sub">Passwort</label>
+    <input id="pw" type="password" autocomplete="current-password" required>
+    <label class="keep"><input type="checkbox" id="keep"> Auf diesem Gerät angemeldet bleiben</label>
+    <button class="btn" type="submit">Entsperren</button>
+    <p class="err" id="loginErr" role="alert"></p>
+  </form>
+</section>
+
+<div id="app" hidden>
+  <header>
+    <div class="bar">
+      <h1>Quotenvergleich</h1>
+      <span class="stamp" id="stamp"></span>
+      <span class="spacer"></span>
+      <button class="linkbtn" id="reload">Neu laden</button>
+      <button class="linkbtn" id="logout">Abmelden</button>
+    </div>
+    <nav role="tablist">
+      <button role="tab" data-tab="tips" aria-selected="true">Tipps<span class="count" id="cTips"></span></button>
+      <button role="tab" data-tab="value" aria-selected="false">Value<span class="count" id="cValue"></span></button>
+      <button role="tab" data-tab="games" aria-selected="false">Alle Spiele<span class="count" id="cGames"></span></button>
+      <button role="tab" data-tab="status" aria-selected="false">Status</button>
+    </nav>
+  </header>
+  <main id="main"></main>
+</div>
+
+<script>
+'use strict';
+const S = { data: null, key: null, tab: 'tips', open: {}, gameCache: {}, f: { tipsUpcoming: true, vSport: '', vMin: 2, gSport: '', gLeague: '', gQ: '', mQ: '' } };
+const TZ = 'Europe/Vienna';
+const COLORS = ['#2f6fdd', '#d2691e', '#1d7a4c', '#8e44ad', '#c0392b', '#16a2b8'];
+
+// ---------- Entschlüsselung (AES-GCM, Schlüssel per PBKDF2 aus dem Passwort)
+async function deriveKey(pw) {
+  const meta = await (await fetch('data/meta.json', { cache: 'no-store' })).json();
+  const salt = Uint8Array.from(atob(meta.salt), c => c.charCodeAt(0));
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: meta.iterations, hash: 'SHA-256' },
+    base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+}
+async function loadBin(path, key) {
+  const buf = new Uint8Array(await (await fetch(path, { cache: 'no-store' })).arrayBuffer());
+  const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: buf.slice(0, 12) }, key, buf.slice(12));
+  const text = await new Response(new Blob([plain]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+  return JSON.parse(text);
+}
+function store(get, k, v) { try { return get ? localStorage.getItem(k) : (v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v)); } catch (e) { return null; } }
+
+async function unlock(pw, keep) {
+  const err = document.getElementById('loginErr');
+  err.textContent = '';
+  try {
+    const key = await deriveKey(pw);
+    const data = await loadBin('data/index.bin', key);
+    S.key = key; S.data = data; S.gameCache = {};
+    if (keep) store(false, 'qv_pw', pw);
+    document.getElementById('lock').hidden = true;
+    document.getElementById('app').hidden = false;
+    render();
+  } catch (e) {
+    store(false, 'qv_pw', null);
+    err.textContent = e && e.name === 'OperationError' ? 'Passwort falsch.' : 'Daten konnten nicht geladen werden: ' + (e.message || e);
+  }
+}
+document.getElementById('loginForm').addEventListener('submit', ev => {
+  ev.preventDefault();
+  unlock(document.getElementById('pw').value, document.getElementById('keep').checked);
+});
+document.getElementById('logout').addEventListener('click', () => { store(false, 'qv_pw', null); location.reload(); });
+document.getElementById('reload').addEventListener('click', async () => {
+  try { S.data = await loadBin('data/index.bin', S.key); S.gameCache = {}; render(); } catch (e) { alert('Neu laden fehlgeschlagen: ' + e.message); }
+});
+document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => {
+  S.tab = b.dataset.tab;
+  document.querySelectorAll('nav button').forEach(x => x.setAttribute('aria-selected', x === b ? 'true' : 'false'));
+  render();
+}));
+(function auto() { const pw = store(true, 'qv_pw'); if (pw) unlock(pw, true); })();
+
+// ---------- Hilfen
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = p => p == null ? '' : Number(p).toFixed(2);
+const pct = v => v == null ? '' : (v > 0 ? '+' : '') + v.toFixed(1).replace('.', ',') + ' %';
+const fmtTime = iso => { if (!iso) return ''; const d = new Date(iso); return isNaN(d) ? esc(iso) : d.toLocaleString('de-AT', { timeZone: TZ, weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', ''); };
+const ago = iso => { const m = Math.round((Date.now() - new Date(iso)) / 60000); return isNaN(m) ? '' : m < 1 ? 'gerade eben' : m < 60 ? `vor ${m} min` : `vor ${Math.round(m / 60)} h`; };
+const books = () => S.data.books || [];
+const label = slug => (books().find(b => b.slug === slug) || {}).label || slug;
+function priceCells(at, minOdds) {
+  const vals = Object.values(at || {});
+  const max = vals.length ? Math.max(...vals) : null;
+  return books().map(b => {
+    const p = (at || {})[b.slug];
+    if (p == null) return '<td class="p off">–</td>';
+    const cls = p === max ? 'best' : (minOdds && p < minOdds ? 'below' : '');
+    return `<td class="p"><span class="${cls}">${fmt(p)}</span></td>`;
+  }).join('');
+}
+const bookHeads = () => books().map(b => `<th class="p">${esc(b.label)}</th>`).join('');
+const setCount = (id, n) => { document.getElementById(id).textContent = n ? ' ' + n : ''; };
+
+function render() {
+  const d = S.data;
+  document.getElementById('stamp').textContent = 'Stand ' + fmtTime(d.updated) + ' (' + ago(d.updated) + ')';
+  setCount('cTips', (d.tips || []).length);
+  setCount('cValue', (d.value || []).length);
+  setCount('cGames', (d.games || []).length);
+  const main = document.getElementById('main');
+  main.innerHTML = { tips: viewTips, value: viewValue, games: viewGames, status: viewStatus }[S.tab]();
+  bind(main);
+}
+
+// ---------- Tipps
+function viewTips() {
+  let tips = (S.data.tips || []).slice();
+  const now = Date.now();
+  if (S.f.tipsUpcoming) tips = tips.filter(t => !t.start || new Date(t.start) > now - 3 * 3600e3);
+  tips.sort((a, b) => String(a.start || a.kick || '').localeCompare(String(b.start || b.kick || '')));
+  const withMin = tips.filter(t => t.min_odds != null && t.reach != null);
+  const reach = withMin.filter(t => t.reach).length;
+  const head = `<div class="tools">
+      <label><input type="checkbox" data-f="tipsUpcoming" ${S.f.tipsUpcoming ? 'checked' : ''}> Nur kommende Spiele</label>
+    </div>
+    <p class="summary"><b>${reach}</b> von <b>${withMin.length}</b> Tipps: Mindestquote bei mindestens einem Buchmacher aktiv verfügbar.
+    Gelb markiert ist die beste Quote je Zeile, durchgestrichen sind Quoten unter eurer Mindestquote.</p>`;
+  if (!tips.length) return head + '<div class="wrap"><p class="empty">Keine Tipps gefunden. Prüft, ob die Google-Tabelle als CSV veröffentlicht ist und der Link als Secret TIPS_CSV_URL hinterlegt ist.</p></div>';
+  const rows = tips.map((t, i) => {
+    const id = 't' + t.row + '_' + i;
+    const ok = t.status && t.status.startsWith('OK');
+    const reachTxt = t.min_odds == null ? '<span class="sub">keine</span>' : t.reach == null ? '' :
+      t.reach ? `<span class="yes">Ja, ${t.reach_books.length}×</span>` : '<span class="no">Nein</span>';
+    const best = t.best_at ? `<span class="num">${fmt(t.best_at[1])}</span> <span class="sub">${esc(label(t.best_at[0]))}</span>` : '';
+    const ev = t.ev == null ? '' : `<span class="${t.ev > 0 ? 'ev-pos' : 'ev-neg'}">${pct(t.ev)}</span>`;
+    const oth = (t.others || [])[0];
+    const main = `<tr class="row" data-open="${id}" tabindex="0" aria-expanded="${!!S.open[id]}">
+      <td class="sticky"><div class="when">${fmtTime(t.start || t.kick) || esc(t.kick_raw)}</div><div class="game">${esc(t.found || t.game)}</div><div class="sub">${esc(t.found_league || t.league)}</div></td>
+      <td><div class="tipcell">${esc(t.tip)}</div><div class="sub">${ok ? esc(t.market || '') : '<span class="warn">' + esc(t.status) + '</span>'}</div></td>
+      <td class="p">${t.min_odds != null ? fmt(t.min_odds) : ''}</td>
+      <td>${reachTxt}</td>
+      <td class="time">${best}</td>
+      <td class="p num">${ev}</td>
+      ${priceCells(t.at, t.min_odds)}
+      <td class="p off">${oth ? fmt(oth[1]) + ' <span class="sub">' + esc(oth[0]) + '</span>' : '–'}</td>
+    </tr>`;
+    return main + (S.open[id] ? tipDetail(t) : '');
+  }).join('');
+  return head + `<div class="wrap"><table>
+    <thead><tr><th class="sticky">Anstoß und Spiel</th><th>Tipp</th><th class="p">Mindestquote</th><th>Erreichbar</th><th>Beste Quote</th><th class="p">Value</th>${bookHeads()}<th class="p">Bester sonstiger</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
+}
+
+function tipDetail(t) {
+  const n = 8 + books().length;
+  const others = (t.others || []).map(o => `<span class="chip">${esc(o[0])} ${fmt(o[1])}</span>`).join('') || '<span class="sub">keine weiteren Angebote</span>';
+  const reachList = (t.reach_books || []).map(o => `<span class="chip best">${esc(label(o[0]))} ${fmt(o[1])}</span>`).join('');
+  return `<tr class="detail"><td colspan="${n}"><div class="detail-grid">
+    <div><h3 class="dh">Quotenverlauf ${esc(t.tip)}</h3>${chart(t.history, t.min_odds)}</div>
+    <div>
+      <p class="sub" style="margin:0 0 4px">Status</p><p style="margin:0 0 12px">${esc(t.status)}${t.odds_time ? ', Quoten ' + ago(t.odds_time) : ''}</p>
+      ${t.found && t.found !== t.game ? `<p class="sub" style="margin:0 0 4px">Eure Angabe in der Tabelle</p><p style="margin:0 0 12px">${esc(t.game)} (Zeile ${t.row})</p>` : ''}
+      ${reachList ? `<p class="sub" style="margin:0 0 4px">Mindestquote erreicht bei</p><div class="chips" style="margin-bottom:12px">${reachList}</div>` : ''}
+      <p class="sub" style="margin:0 0 4px">Faire Quote (Marktkonsens ohne Marge)</p><p class="num" style="margin:0 0 12px;font-size:20px">${t.fair ? fmt(t.fair) : '–'}</p>
+      <p class="sub" style="margin:0 0 4px">Weitere Buchmacher (${t.n || 0} insgesamt)</p><div class="chips">${others}</div>
+    </div></div></td></tr>`;
+}
+
+function chart(series, minOdds) {
+  const keys = Object.keys(series || {});
+  if (!keys.length) return '<p class="sub">Noch kein Verlauf verfügbar.</p>';
+  const pts = keys.flatMap(k => series[k].map(p => [new Date(p[0]).getTime(), p[1]])).filter(p => !isNaN(p[0]));
+  if (!pts.length) return '<p class="sub">Noch kein Verlauf verfügbar.</p>';
+  const W = 640, H = 220, L = 44, R = 12, T = 12, B = 28;
+  let x0 = Math.min(...pts.map(p => p[0])), x1 = Math.max(...pts.map(p => p[0]), x0 + 3600e3);
+  let ys = pts.map(p => p[1]); if (minOdds) ys.push(minOdds);
+  let y0 = Math.min(...ys), y1 = Math.max(...ys); const pad = Math.max(0.02, (y1 - y0) * 0.12); y0 -= pad; y1 += pad;
+  const X = t => L + (t - x0) / (x1 - x0) * (W - L - R), Y = v => T + (1 - (v - y0) / (y1 - y0)) * (H - T - B);
+  let g = '';
+  for (let i = 0; i <= 4; i++) { const v = y0 + (y1 - y0) * i / 4; g += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${v.toFixed(2)}</text>`; }
+  [x0, (x0 + x1) / 2, x1].forEach((t, i) => { g += `<text x="${X(t)}" y="${H - 8}" text-anchor="${['start', 'middle', 'end'][i]}">${new Date(t).toLocaleString('de-AT', { timeZone: TZ, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</text>`; });
+  if (minOdds) g += `<line x1="${L}" x2="${W - R}" y1="${Y(minOdds)}" y2="${Y(minOdds)}" stroke="var(--bad)" stroke-dasharray="5 4"/><text x="${W - R}" y="${Y(minOdds) - 5}" text-anchor="end">Mindestquote ${fmt(minOdds)}</text>`;
+  keys.forEach((k, i) => {
+    const s = series[k].map(p => [new Date(p[0]).getTime(), p[1]]).filter(p => !isNaN(p[0])).sort((a, b) => a[0] - b[0]);
+    let d = '', prev = null;
+    s.forEach(p => { d += prev ? `H${X(p[0]).toFixed(1)}V${Y(p[1]).toFixed(1)}` : `M${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`; prev = p; });
+    if (prev) d += `H${(W - R).toFixed(1)}`;
+    g += `<path d="${d}" fill="none" stroke="${COLORS[i % COLORS.length]}" stroke-width="2.2"/>`;
+  });
+  const legend = keys.map((k, i) => `<span><i style="background:${COLORS[i % COLORS.length]}"></i>${esc(label(k))}</span>`).join('');
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Quotenverlauf">${g}</svg><div class="legend">${legend}</div>`;
+}
+
+// ---------- Value
+function viewValue() {
+  const sports = [...new Set((S.data.value || []).map(v => v.sport))].sort();
+  let list = (S.data.value || []).filter(v => (!S.f.vSport || v.sport === S.f.vSport) && v.ev >= S.f.vMin && new Date(v.start) > Date.now());
+  const head = `<div class="tools">
+      <label>Sportart <select data-f="vSport"><option value="">alle</option>${sports.map(s => `<option ${s === S.f.vSport ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select></label>
+      <label>Mindestens <input type="number" step="0.5" min="0" data-f="vMin" value="${S.f.vMin}" style="width:80px"> % Value</label>
+    </div>
+    <p class="summary">Quoten eurer Buchmacher, die über der fairen Quote liegen. Die faire Quote ist der Marktkonsens: je Buchmacher die Marge herausgerechnet, dann der Median. Stand des Tages-Scans: ${fmtTime(S.data.last_scan) || 'noch kein Scan'}.</p>`;
+  if (!list.length) return head + '<div class="wrap"><p class="empty">Gerade keine Quoten über dieser Schwelle. Schwelle senken oder nach dem nächsten Tages-Scan wieder ansehen.</p></div>';
+  list = list.slice(0, 300);
+  return head + `<div class="wrap"><table><thead><tr><th class="sticky">Anstoß und Spiel</th><th>Markt</th><th>Tipp</th><th class="p">Value</th><th class="p">Faire Quote</th>${bookHeads()}</tr></thead><tbody>
+    ${list.map(v => `<tr><td class="sticky"><div class="when">${fmtTime(v.start)}</div><div class="game">${esc(v.home)} vs ${esc(v.away)}</div><div class="sub">${esc(v.sport)}, ${esc(v.league)}</div></td>
+      <td>${esc(v.market)}</td><td class="tipcell">${esc(v.outcome)}</td>
+      <td class="p num ev-pos">${pct(v.ev)}</td><td class="p off">${fmt(v.fair)}</td>${priceCells(v.at)}</tr>`).join('')}
+    </tbody></table></div>`;
+}
+
+// ---------- Alle Spiele
+function viewGames() {
+  const all = (S.data.games || []).filter(g => new Date(g.start) > Date.now() - 3 * 3600e3);
+  const sports = [...new Set(all.map(g => g.sport))].sort();
+  const leagues = [...new Set(all.filter(g => !S.f.gSport || g.sport === S.f.gSport).map(g => (g.country ? g.country + ' – ' : '') + g.league))].sort();
+  const q = S.f.gQ.trim().toLowerCase();
+  const list = all.filter(g => (!S.f.gSport || g.sport === S.f.gSport) &&
+    (!S.f.gLeague || (g.country ? g.country + ' – ' : '') + g.league === S.f.gLeague) &&
+    (!q || (g.home + ' ' + g.away + ' ' + g.league).toLowerCase().includes(q)));
+  const head = `<div class="tools">
+      <input type="search" placeholder="Team oder Liga suchen" data-f="gQ" value="${esc(S.f.gQ)}" aria-label="Suchen">
+      <label>Sportart <select data-f="gSport"><option value="">alle</option>${sports.map(s => `<option ${s === S.f.gSport ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select></label>
+      <label>Liga <select data-f="gLeague"><option value="">alle</option>${leagues.map(s => `<option ${s === S.f.gLeague ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select></label>
+    </div>
+    <p class="summary"><b>${list.length}</b> Spiele. Spiel anklicken für alle Märkte mit allen Buchmachern.</p>`;
+  if (!list.length) return head + '<div class="wrap"><p class="empty">Keine Spiele für diese Auswahl. Der Tages-Scan läuft einmal täglich am Morgen.</p></div>';
+  const shown = list.slice(0, 400);
+  const rows = shown.map(g => {
+    const m = g.main;
+    const outs = m ? m.outcomes.map(o => o.best_at ? `<span class="chip">${esc(o.name)} <b class="num">${fmt(o.best_at[1])}</b> <span class="src">${esc(label(o.best_at[0]))}</span></span>` : `<span class="chip">${esc(o.name)} <span class="src">nicht bei euren Buchmachern</span></span>`).join(' ') : '<span class="sub">kein Hauptmarkt</span>';
+    const open = S.open['g' + g.fid];
+    return `<tr class="row" data-game="${esc(g.fid)}" tabindex="0" aria-expanded="${!!open}">
+      <td class="sticky"><div class="when">${fmtTime(g.start)}</div><div class="game">${esc(g.home)} vs ${esc(g.away)}</div><div class="sub">${esc(g.sport)}, ${esc(g.country ? g.country + ' – ' : '')}${esc(g.league)}</div></td>
+      <td><div class="chips">${outs}</div></td>
+      <td class="p off">${g.nm}</td><td class="sub time">${ago(g.updated)}</td></tr>` +
+      (open ? `<tr class="detail"><td colspan="4" id="gd_${esc(g.fid)}">${S.gameCache[g.fid] ? gameDetail(S.gameCache[g.fid]) : '<p class="sub">Lade Märkte …</p>'}</td></tr>` : '');
+  }).join('');
+  return head + `<div class="wrap"><table><thead><tr><th class="sticky">Anstoß und Spiel</th><th>Hauptmarkt, beste Quote eurer Buchmacher</th><th class="p">Märkte</th><th>Quoten</th></tr></thead><tbody>${rows}</tbody></table></div>` +
+    (list.length > shown.length ? `<p class="sub">Es werden die ersten 400 Spiele angezeigt. Filter nutzen, um den Rest zu sehen.</p>` : '');
+}
+
+function gameDetail(d) {
+  const q = S.f.mQ.trim().toLowerCase();
+  const ms = d.markets.filter(m => !q || m.label.toLowerCase().includes(q));
+  return `<div class="detail-inner"><div class="tools"><input type="search" placeholder="Markt filtern, z. B. Handicap" data-f="mQ" value="${esc(S.f.mQ)}" aria-label="Markt filtern"><span class="sub">${ms.length} von ${d.markets.length} Märkten, Quoten ${ago(d.updated)}</span></div>` +
+    ms.map(m => `<div class="market"><h3>${esc(m.label)}</h3><div class="wrap"><table>
+      <thead><tr><th>Tipp</th>${bookHeads()}<th class="p">Beste sonstige</th><th class="p">Faire Quote</th></tr></thead><tbody>
+      ${m.outcomes.map(o => `<tr><td class="tipcell">${esc(o.name)}</td>${priceCells(o.at)}<td class="p off">${o.oth && o.oth[0] ? fmt(o.oth[0][1]) + ' <span class="sub">' + esc(o.oth[0][0]) + '</span>' : '–'}</td><td class="p off">${o.fair ? fmt(o.fair) : '–'}</td></tr>`).join('')}
+      </tbody></table></div></div>`).join('') + '</div>';
+}
+
+async function openGame(fid) {
+  const key = 'g' + fid;
+  S.open[key] = !S.open[key];
+  render();
+  if (S.open[key] && !S.gameCache[fid]) {
+    const g = S.data.games.find(x => x.fid === fid);
+    try { S.gameCache[fid] = await loadBin('data/g/' + g.file, S.key); }
+    catch (e) { S.gameCache[fid] = { markets: [], updated: null }; }
+    render();
+  }
+}
+
+// ---------- Status
+function viewStatus() {
+  const d = S.data, b = d.budget || {};
+  return `<div class="panel status"><h2>Abrufe und Stand</h2><dl>
+    <dt>Letzte Aktualisierung</dt><dd>${fmtTime(d.updated)} (${ago(d.updated)})</dd>
+    <dt>Letzter Tages-Scan</dt><dd>${fmtTime(d.last_scan) || 'noch keiner'}</dd>
+    <dt>Monat</dt><dd class="num">${b.used ?? '?'} von ${b.limit ?? '?'} Abrufen</dd>
+    <dt>Heute</dt><dd class="num">${b.today ?? '?'} Abrufe (Tagesziel ${b.daily_target ?? '?'})</dd>
+    <dt>Letzter Lauf</dt><dd class="num">${b.this_run ?? '?'} Abrufe</dd>
+    <dt>Abrufart</dt><dd>${esc(b.mode || '')}</dd>
+    <dt>Buchmacher</dt><dd>${books().map(x => esc(x.label)).join(', ') || '–'}</dd>
+    ${(d.books_missing || []).length ? `<dt>Nicht gefunden</dt><dd class="warn">${d.books_missing.map(esc).join('<br>')}</dd>` : ''}
+  </dl></div>
+  <div class="panel status"><h2>Protokoll des letzten Laufs</h2><pre>${esc((d.log || []).join('\n'))}</pre></div>`;
+}
+
+// ---------- Ereignisse
+let typing;
+function bind(root) {
+  root.querySelectorAll('[data-f]').forEach(el => {
+    const handler = () => {
+      const k = el.dataset.f;
+      S.f[k] = el.type === 'checkbox' ? el.checked : el.type === 'number' ? Number(el.value || 0) : el.value;
+      if (k === 'gSport') S.f.gLeague = '';
+      if (el.type === 'search') { clearTimeout(typing); typing = setTimeout(() => { const pos = el.selectionStart; render(); const n = document.querySelector(`[data-f="${k}"]`); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }, 250); }
+      else render();
+    };
+    el.addEventListener(el.type === 'search' || el.type === 'number' ? 'input' : 'change', handler);
+  });
+  root.querySelectorAll('tr[data-open]').forEach(tr => {
+    const act = () => { S.open[tr.dataset.open] = !S.open[tr.dataset.open]; render(); };
+    tr.addEventListener('click', act);
+    tr.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act(); } });
+  });
+  root.querySelectorAll('tr[data-game]').forEach(tr => {
+    tr.addEventListener('click', () => openGame(tr.dataset.game));
+    tr.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openGame(tr.dataset.game); } });
+  });
+}
+// Alle 10 Minuten still nachladen (die Daten werden alle 30 min neu gebaut)
+setInterval(async () => { if (S.key) { try { S.data = await loadBin('data/index.bin', S.key); render(); } catch (e) {} } }, 10 * 60e3);
+</script>
+</body>
+</html>
